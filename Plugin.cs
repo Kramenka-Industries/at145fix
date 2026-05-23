@@ -91,7 +91,7 @@ namespace Qol145Fix
             // Runs for every missile launch of every type; everything below
             // only executes for AT-145 (Missile_G2G).
             string name = __instance.name;
-            if (name == null || name.IndexOf("Missile_G2G", StringComparison.Ordinal) < 0)
+            if (name == null || !name.Equals("Missile_G2G"))
                 return;
 
             bool verbose = Qol145FixPlugin.VerboseLogging.Value;
