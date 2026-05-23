@@ -30,6 +30,7 @@ namespace Qol145Fix
         public static ConfigEntry<float> MotorBurnTime;
         public static ConfigEntry<float> MotorThrust;
         public static ConfigEntry<float> MotorFuelMass;
+        public static ConfigEntry<float> WarheadYield;
         public static ConfigEntry<bool> VerboseLogging;
         public static ManualLogSource Log;
 
@@ -47,6 +48,8 @@ namespace Qol145Fix
                 "Thrust of the AT-145 engine in Newtons. Vanilla is ~950N. QoL mod sets to 5000N.");
             MotorFuelMass = Config.Bind<float>("General", "Motor Fuel Mass", 3.5f,
                 "Fuel mass of the AT-145 engine in kg. Vanilla is ~3.5kg. QoL mod sets to 1.0kg.");
+            WarheadYield = Config.Bind<float>("General", "Warhead Yield", 8.0f,
+                "Yield of the warhead in kg tnt. Vanilla is 8kg.");
             VerboseLogging = Config.Bind<bool>("Debug", "Verbose Logging", false,
                 "Logs every AT-145 launch with before/after values. Off by default to avoid per-launch log I/O and string allocation.");
 
@@ -84,6 +87,9 @@ namespace Qol145Fix
 
         private static readonly AccessTools.FieldRef<object, float> FuelMassRef =
             AccessTools.FieldRefAccess<float>(MotorType, "fuelMass");
+
+        private static AccessTools.FieldRef<Missile, float> BlastYieldRef =
+            AccessTools.FieldRefAccess<Missile, float>("blastYield");
 
         public static void Postfix(Missile __instance)
         {
@@ -136,6 +142,14 @@ namespace Qol145Fix
             ThrustRef(motor) = thrust;
             BurnTimeRef(motor) = burn;
             FuelMassRef(motor) = fuel;
+
+            if (verbose)
+            {
+                Qol145FixPlugin.Log?.LogInfo(
+                    $"[qol145fix] {name} warhead yield {BlastYieldRef(__instance)}->{Qol145FixPlugin.WarheadYield.Value}");
+            }
+
+            BlastYieldRef(__instance) = Qol145FixPlugin.WarheadYield.Value;
         }
     }
 }
