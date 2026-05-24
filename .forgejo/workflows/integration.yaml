@@ -1,0 +1,64 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionTag:
+        description: 'Version tag to release'
+        required: true
+        type: string
+      releaseNotes:
+        description: 'Release notes to display'
+        required: true
+        type: string
+      isPrerelease:
+        description: 'Mark as prerelease'
+        required: true
+        default: false
+        type: boolean
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: docker
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Setup bepinex nuget source
+      run: dotnet nuget add source https://nuget.bepinex.dev/v3/index.json --skip-duplicate
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    
+    - name: Create release directory
+      run: mkdir release
+    - name: Copy dll to assembly
+      run: cp bin/Debug/qol145fix.dll release/qol145fix.dll
+
+    - name: Release
+      uses: actions/forgejo-release@v2.12.0
+      with:
+        direction: upload
+        url: https://git.pr0.tech/
+        repo: rs/screamingMissiles
+        token: ${{ secrets.WRITE_TOKEN }}
+        tag: ${{ inputs.versionTag }}
+        release-dir: release
+        release-notes: ${{ inputs.releaseNotes }}
+        prerelease: ${{ inputs.isPrerelease }}
+
